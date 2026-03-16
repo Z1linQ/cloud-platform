@@ -27,7 +27,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  createdTasks Task[]   @relation("CreatedTasks")
+  createdTasks  Task[]  @relation("CreatedTasks")
   assignedTasks Task[]  @relation("AssignedTasks")
 }
 
