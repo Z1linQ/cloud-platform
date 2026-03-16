@@ -55,13 +55,21 @@ router.post("/", async (req, res) => {
       });
     }
 
+    let finalAssigneeId = null;
+
+    if (req.user.role === "ADMIN") {
+      finalAssigneeId = assigneeId || null;
+    } else {
+      finalAssigneeId = req.user.id;
+    }
+
     const task = await prisma.task.create({
       data: {
         title,
         description,
         status: status || "TODO",
         creatorId: req.user.id,
-        assigneeId: assigneeId || null,
+        assigneeId: finalAssigneeId,
       },
       include: {
         creator: {
@@ -72,6 +80,11 @@ router.post("/", async (req, res) => {
         },
       },
     });
+
+    const io = req.app.get("io");
+    if (io) {
+        io.emit("task:created", task);
+    }
 
     res.status(201).json({
       message: "Task created successfully",
@@ -111,14 +124,19 @@ router.put("/:id", async (req, res) => {
       });
     }
 
+    const updateData = {};
+
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (status !== undefined) updateData.status = status;
+
+    if (req.user.role === "ADMIN" && assigneeId !== undefined) {
+      updateData.assigneeId = assigneeId || null;
+    }
+
     const updatedTask = await prisma.task.update({
       where: { id },
-      data: {
-        title,
-        description,
-        status,
-        assigneeId,
-      },
+      data: updateData,
       include: {
         creator: {
           select: { id: true, name: true, email: true, role: true },
@@ -128,6 +146,11 @@ router.put("/:id", async (req, res) => {
         },
       },
     });
+
+    const io = req.app.get("io");
+    if (io) {
+        io.emit("task:updated", updatedTask);
+    }
 
     res.json({
       message: "Task updated successfully",
@@ -167,6 +190,11 @@ router.delete("/:id", async (req, res) => {
     await prisma.task.delete({
       where: { id },
     });
+
+    const io = req.app.get("io");
+    if (io) {
+        io.emit("task:deleted", { id });
+    }
 
     res.json({
       message: "Task deleted successfully",

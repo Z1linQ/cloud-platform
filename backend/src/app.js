@@ -3,6 +3,7 @@ import cors from "cors";
 import prisma from "./utils/prisma.js";
 import authRoutes from "./routes/authRoutes.js";
 import taskRoutes from "./routes/taskRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 
@@ -34,5 +35,6 @@ app.get("/api/db-health", async (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/users", userRoutes);
 
 export default app;

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function App() {
+  const [users, setUsers] = useState([]);
+  const [assigneeId, setAssigneeId] = useState("");
   const [mode, setMode] = useState("login");
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [user, setUser] = useState(null);
@@ -67,9 +70,25 @@ function App() {
     setTasks(data.tasks || []);
   };
 
+  const fetchUsers = async (currentToken = token) => {
+  const res = await fetch(`${API_URL}/api/users`, {
+    headers: {
+      Authorization: `Bearer ${currentToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    await handleApiError(res);
+  }
+
+  const data = await res.json();
+  setUsers(data.users || []);
+};
+
   const loadDashboard = async (currentToken = token) => {
     await fetchMe(currentToken);
     await fetchTasks(currentToken);
+    await fetchUsers(currentToken);
   };
 
   useEffect(() => {
@@ -80,6 +99,41 @@ function App() {
       setMessage("Session expired. Please log in again.");
       handleLogout();
     });
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const socket = io(API_URL, {
+      transports: ["websocket"],
+    });
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+    });
+
+    socket.on("task:created", async () => {
+      console.log("Realtime event: task created");
+      await fetchTasks(token);
+    });
+
+    socket.on("task:updated", async () => {
+      console.log("Realtime event: task updated");
+      await fetchTasks(token);
+    });
+
+    socket.on("task:deleted", async () => {
+      console.log("Realtime event: task deleted");
+      await fetchTasks(token);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [token]);
 
   const handleRegister = async (e) => {
@@ -161,6 +215,7 @@ function App() {
         body: JSON.stringify({
           title,
           description,
+          assigneeId: user?.role === "ADMIN" ? assigneeId || null : undefined,
         }),
       });
 
@@ -173,6 +228,7 @@ function App() {
       setTitle("");
       setDescription("");
       setMessage("Task created successfully.");
+      setAssigneeId("");
     } catch (err) {
       setMessage(err.message);
     } finally {
@@ -319,8 +375,11 @@ function App() {
             <p style={{ marginTop: "8px", color: "#555" }}>
               Logged in as <strong>{user?.name}</strong> ({user?.email}) | Role:{" "}
               <strong>{user?.role}</strong>
-            </p>
-          </div>
+            </p>            <p style={{ marginTop: "4px", color: "#666" }}>
+              {user?.role === "ADMIN"
+                ? "You can assign tasks and manage all tasks."
+                : "You can view and update tasks related to you."}
+            </p>          </div>
           <button style={styles.logoutButton} onClick={handleLogout}>
             Logout
           </button>
@@ -341,6 +400,20 @@ function App() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+            {user?.role === "ADMIN" ? (
+            <select
+                style={styles.input}
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+            >
+                <option value="">Unassigned</option>
+                {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                    {u.name} ({u.role})
+                </option>
+                ))}
+            </select>
+            ) : null}
             <button style={styles.primaryButton} disabled={loading}>
               {loading ? "Processing..." : "Create Task"}
             </button>
@@ -362,6 +435,12 @@ function App() {
                     </p>
                     <p style={{ margin: 0, fontSize: "14px", color: "#777" }}>
                       Status: <strong>{task.status}</strong>
+                    </p>
+                    <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#777" }}>
+                      Assignee: <strong>{task.assignee?.name || "Unassigned"}</strong>
+                    </p>
+                    <p style={{ margin: "6px 0 0 0", fontSize: "14px", color: "#777" }}>
+                      Creator: <strong>{task.creator?.name || "Unknown"}</strong>
                     </p>
                   </div>
 
