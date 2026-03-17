@@ -6,6 +6,64 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
+router.put("/:id/discussion-lock", async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        message: "Only admins can lock or unlock discussions",
+      });
+    }
+
+    const { id } = req.params;
+    const { discussionLocked } = req.body;
+
+    const existingTask = await prisma.task.findUnique({
+      where: { id },
+    });
+
+    if (!existingTask) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    const updatedTask = await prisma.task.update({
+      where: { id },
+      data: {
+        discussionLocked: Boolean(discussionLocked),
+      },
+      include: {
+        creator: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        assignee: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+      },
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("task:updated", updatedTask);
+    }
+
+    res.json({
+      message: "Discussion lock updated successfully",
+      task: updatedTask,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update discussion lock",
+      error: error.message,
+    });
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const where =
@@ -26,6 +84,11 @@ router.get("/", async (req, res) => {
         },
         assignee: {
           select: { id: true, name: true, email: true, role: true },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
         },
       },
       orderBy: {
@@ -75,6 +138,11 @@ router.post("/", async (req, res) => {
         },
         assignee: {
           select: { id: true, name: true, email: true, role: true },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
         },
       },
     });
@@ -143,6 +211,11 @@ router.put("/:id", async (req, res) => {
         },
         assignee: {
           select: { id: true, name: true, email: true, role: true },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
         },
       },
     });

@@ -70,3 +70,22 @@ export async function deleteTask(token, taskId) {
 
   return data;
 }
+
+export async function updateDiscussionLock(token, taskId, discussionLocked) {
+  const res = await fetch(`${API_URL}/api/tasks/${taskId}/discussion-lock`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ discussionLocked }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to update discussion lock");
+  }
+
+  return data;
+}

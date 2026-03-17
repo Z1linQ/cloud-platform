@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import FullThreadModal from "../comments/FullThreadModal";
 
 function formatDate(dateString) {
   if (!dateString) return "N/A";
@@ -14,23 +15,46 @@ function TaskDrawer({
   onUpdateTask,
   onDeleteTask,
   onAddComment,
+  onDeleteComment,
+  onToggleDiscussionLock,
 }) {
   const [status, setStatus] = useState("TODO");
   const [assigneeId, setAssigneeId] = useState("");
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("details");
+  const [showFullThread, setShowFullThread] = useState(false);
+  const commentsEndRef = useRef(null);
 
   const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
     if (!task) return;
 
-    setStatus(task.status || "TODO");
-    setAssigneeId(task.assignee?.id || "");
     setMessage("");
     setCommentText("");
-  }, [task]);
+    setActiveTab("details");
+    setShowFullThread(false);
+  }, [task?.id]);
+
+  useEffect(() => {
+    if (!task) return;
+
+    setStatus(task.status || "TODO");
+    setAssigneeId(task.assignee?.id || "");
+  }, [task?.id, task?.status, task?.assignee?.id]);
+
+  useEffect(() => {
+    if (activeTab !== "discussion") return;
+
+    requestAnimationFrame(() => {
+      commentsEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    });
+  }, [comments.length, activeTab]);
 
   if (!task) return null;
 
@@ -84,10 +108,31 @@ function TaskDrawer({
       await onAddComment(task.id, commentText.trim());
       setCommentText("");
       setMessage("Comment added.");
+      setActiveTab("discussion");
     } catch (error) {
       setMessage(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const confirmed = window.confirm("Delete this comment?");
+    if (!confirmed) return;
+
+    try {
+      await onDeleteComment(commentId);
+      setMessage("Comment deleted.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  };
+
+  const handleToggleLock = async () => {
+    try {
+      await onToggleDiscussionLock(task.id, !task.discussionLocked);
+    } catch (error) {
+      setMessage(error.message);
     }
   };
 
@@ -103,6 +148,14 @@ function TaskDrawer({
               <span className="soft-pill">
                 {task.assignee?.name || "Unassigned"}
               </span>
+              <span className="soft-pill">💬 {comments.length}</span>
+              <span
+                className={
+                  task.discussionLocked ? "lock-pill locked" : "lock-pill open"
+                }
+              >
+                {task.discussionLocked ? "Discussion Locked" : "Discussion Open"}
+              </span>
             </div>
 
             <h2 className="drawer-title">{task.title}</h2>
@@ -116,114 +169,201 @@ function TaskDrawer({
           </button>
         </div>
 
-        <div className="drawer-section card-section">
-          <h4>Description</h4>
-          <div className="description-box">
-            {task.description || "No description provided."}
-          </div>
-        </div>
-
-        <div className="drawer-section card-section">
-          <h4>Metadata</h4>
-          <div className="meta-grid">
-            <div className="meta-item">
-              <span className="meta-label">Creator</span>
-              <strong>{task.creator?.name || "Unknown"}</strong>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Assignee</span>
-              <strong>{task.assignee?.name || "Unassigned"}</strong>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Created At</span>
-              <strong>{formatDate(task.createdAt)}</strong>
-            </div>
-            <div className="meta-item">
-              <span className="meta-label">Updated At</span>
-              <strong>{formatDate(task.updatedAt)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="drawer-section card-section">
-          <h4>Update Task</h4>
-
-          <label className="field-label">Status</label>
-          <select
-            className="input"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
+        <div className="drawer-tabs">
+          <button
+            className={activeTab === "details" ? "drawer-tab active" : "drawer-tab"}
+            onClick={() => setActiveTab("details")}
           >
-            <option value="TODO">TODO</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="DONE">DONE</option>
-          </select>
-
-          {isAdmin ? (
-            <>
-              <label className="field-label">Assignee</label>
-              <select
-                className="input"
-                value={assigneeId}
-                onChange={(e) => setAssigneeId(e.target.value)}
-              >
-                <option value="">Unassigned</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.role})
-                  </option>
-                ))}
-              </select>
-            </>
-          ) : null}
-
-          <button className="primary-btn" onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
+            Details
+          </button>
+          <button
+            className={activeTab === "discussion" ? "drawer-tab active" : "drawer-tab"}
+            onClick={() => setActiveTab("discussion")}
+          >
+            Discussion ({comments.length})
           </button>
         </div>
 
-        <div className="drawer-section card-section">
-          <h4>Comments</h4>
+        {activeTab === "details" ? (
+          <>
+            <div className="drawer-section card-section">
+              <h4>Description</h4>
+              <div className="description-box">
+                {task.description || "No description provided."}
+              </div>
+            </div>
 
-          <div className="comments-list">
-            {comments.length === 0 ? (
-              <div className="empty-comments">No comments yet.</div>
-            ) : (
-              comments.map((comment) => (
-                <div key={comment.id} className="comment-item">
-                  <div className="comment-head">
-                    <strong>{comment.author?.name || "Unknown"}</strong>
-                    <span>{formatDate(comment.createdAt)}</span>
-                  </div>
-                  <p>{comment.content}</p>
+            <div className="drawer-section card-section">
+              <h4>Metadata</h4>
+              <div className="meta-grid">
+                <div className="meta-item">
+                  <span className="meta-label">Creator</span>
+                  <strong>{task.creator?.name || "Unknown"}</strong>
                 </div>
-              ))
-            )}
-          </div>
+                <div className="meta-item">
+                  <span className="meta-label">Assignee</span>
+                  <strong>{task.assignee?.name || "Unassigned"}</strong>
+                </div>
+                <div className="meta-item">
+                  <span className="meta-label">Created At</span>
+                  <strong>{formatDate(task.createdAt)}</strong>
+                </div>
+                <div className="meta-item">
+                  <span className="meta-label">Updated At</span>
+                  <strong>{formatDate(task.updatedAt)}</strong>
+                </div>
+              </div>
+            </div>
 
-          <form className="comment-form" onSubmit={handleCommentSubmit}>
-            <textarea
-              className="textarea"
-              placeholder="Write a comment..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-            />
-            <button className="primary-btn" disabled={loading}>
-              {loading ? "Posting..." : "Add Comment"}
-            </button>
-          </form>
-        </div>
+            <div className="drawer-section card-section">
+              <h4>Update Task</h4>
 
-        {isAdmin ? (
-          <div className="drawer-section danger-zone">
-            <h4>Danger Zone</h4>
-            <button className="danger-btn" onClick={handleDelete} disabled={loading}>
-              Delete Task
-            </button>
+              <label className="field-label">Status</label>
+              <select
+                className="input"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="TODO">TODO</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="DONE">DONE</option>
+              </select>
+
+              {isAdmin ? (
+                <>
+                  <label className="field-label">Assignee</label>
+                  <select
+                    className="input"
+                    value={assigneeId}
+                    onChange={(e) => setAssigneeId(e.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} ({u.role})
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : null}
+
+              <button className="primary-btn" onClick={handleSave} disabled={loading}>
+                {loading ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+
+            {isAdmin ? (
+              <div className="drawer-section danger-zone">
+                <h4>Danger Zone</h4>
+                <button
+                  className="ghost-btn"
+                  onClick={handleToggleLock}
+                  style={{ marginRight: "10px" }}
+                >
+                  {task.discussionLocked ? "Unlock Discussion" : "Lock Discussion"}
+                </button>
+
+                <button
+                  className="danger-btn"
+                  onClick={handleDelete}
+                  disabled={loading}
+                >
+                  Delete Task
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="drawer-section card-section">
+            <div className="discussion-header">
+              <div className="discussion-header-left">
+                <h4>Comments</h4>
+                <span
+                  className={
+                    task.discussionLocked ? "lock-pill locked" : "lock-pill open"
+                  }
+                >
+                  {task.discussionLocked ? "Read Only" : "Open"}
+                </span>
+              </div>
+
+              <div className="discussion-header-actions">
+                {isAdmin ? (
+                  <button className="ghost-btn" onClick={handleToggleLock}>
+                    {task.discussionLocked
+                      ? "Unlock Discussion"
+                      : "Lock Discussion"}
+                  </button>
+                ) : null}
+
+                <button
+                  className="ghost-btn"
+                  onClick={() => setShowFullThread(true)}
+                >
+                  Open Full Thread
+                </button>
+              </div>
+            </div>
+
+            <div className="comments-list">
+              {comments.length === 0 ? (
+                <div className="empty-comments">No comments yet.</div>
+              ) : (
+                comments.map((comment) => (
+                  <div key={comment.id} className="comment-item">
+                    <div className="comment-head">
+                      <strong>{comment.author?.name || "Unknown"}</strong>
+                      <span>{formatDate(comment.createdAt)}</span>
+                    </div>
+                    <p>{comment.content}</p>
+
+                    {isAdmin ? (
+                      <button
+                        className="comment-delete-btn"
+                        onClick={() => handleDeleteComment(comment.id)}
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                  </div>
+                ))
+              )}
+              <div ref={commentsEndRef} />
+            </div>
+
+            <form className="comment-form" onSubmit={handleCommentSubmit}>
+              <textarea
+                className="textarea"
+                placeholder={
+                  task.discussionLocked
+                    ? "Discussion is locked"
+                    : "Write a comment..."
+                }
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                disabled={task.discussionLocked}
+              />
+              <button
+                className="primary-btn"
+                disabled={loading || task.discussionLocked}
+              >
+                {loading ? "Posting..." : "Add Comment"}
+              </button>
+            </form>
           </div>
-        ) : null}
+        )}
 
         {message ? <p className="message">{message}</p> : null}
+
+        <FullThreadModal
+          open={showFullThread}
+          task={task}
+          comments={comments}
+          user={user}
+          onClose={() => setShowFullThread(false)}
+          onAddComment={onAddComment}
+          onDeleteComment={onDeleteComment}
+        />
       </div>
     </div>
   );

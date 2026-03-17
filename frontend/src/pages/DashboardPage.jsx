@@ -7,9 +7,14 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  updateDiscussionLock,
 } from "../services/taskService";
 import { getUsers } from "../services/userService";
-import { getComments, createComment } from "../services/commentService";
+import {
+  getComments,
+  createComment,
+  deleteComment,
+} from "../services/commentService";
 import Board from "../components/board/Board";
 import CreateTaskPanel from "../components/admin/CreateTaskPanel";
 import TaskDrawer from "../components/board/TaskDrawer";
@@ -119,9 +124,25 @@ function DashboardPage({ token, onLogout }) {
       await loadData();
     });
 
-    socket.on("comment:created", async ({ taskId }) => {
+    socket.on("comment:created", async ({ taskId, comment }) => {
+      await loadData();
+
       if (selectedTask?.id === taskId) {
-        await loadComments(taskId);
+        setSelectedTaskComments((prev) => {
+          const exists = prev.some((item) => item.id === comment.id);
+          if (exists) return prev;
+          return [...prev, comment];
+        });
+      }
+    });
+
+    socket.on("comment:deleted", async ({ taskId, commentId }) => {
+      await loadData();
+
+      if (selectedTask?.id === taskId) {
+        setSelectedTaskComments((prev) =>
+          prev.filter((comment) => comment.id !== commentId)
+        );
       }
     });
 
@@ -132,7 +153,7 @@ function DashboardPage({ token, onLogout }) {
     return () => {
       socket.disconnect();
     };
-  }, [token, loadData, loadComments, selectedTask?.id]);
+  }, [token, loadData, selectedTask?.id]);
 
   const handleCreateTask = async (payload) => {
     const data = await createTask(token, payload);
@@ -203,9 +224,97 @@ function DashboardPage({ token, onLogout }) {
   };
 
   const handleAddComment = async (taskId, content) => {
-    await createComment(token, taskId, content);
-    await loadComments(taskId);
+    const data = await createComment(token, taskId, content);
+
+    setSelectedTaskComments((prev) => [...prev, data.comment]);
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              updatedAt: data.comment.createdAt,
+              _count: {
+                ...(task._count || {}),
+                comments: (task._count?.comments || 0) + 1,
+              },
+            }
+          : task
+      )
+    );
+
+    setSelectedTask((prev) =>
+      prev && prev.id === taskId
+        ? {
+            ...prev,
+            updatedAt: data.comment.createdAt,
+            _count: {
+              ...(prev._count || {}),
+              comments: (prev._count?.comments || 0) + 1,
+            },
+          }
+        : prev
+    );
+
     setMessage("Comment added.");
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!selectedTask?.id) return;
+
+    const taskId = selectedTask.id;
+
+    await deleteComment(token, commentId);
+
+    setSelectedTaskComments((prev) =>
+      prev.filter((comment) => comment.id !== commentId)
+    );
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              _count: {
+                ...(task._count || {}),
+                comments: Math.max((task._count?.comments || 1) - 1, 0),
+              },
+            }
+          : task
+      )
+    );
+
+    setSelectedTask((prev) =>
+      prev && prev.id === taskId
+        ? {
+            ...prev,
+            _count: {
+              ...(prev._count || {}),
+              comments: Math.max((prev._count?.comments || 1) - 1, 0),
+            },
+          }
+        : prev
+    );
+
+    setMessage("Comment deleted.");
+  };
+
+  const handleToggleDiscussionLock = async (taskId, discussionLocked) => {
+    const data = await updateDiscussionLock(token, taskId, discussionLocked);
+
+    setTasks((prev) =>
+      prev.map((task) => (task.id === taskId ? data.task : task))
+    );
+
+    setSelectedTask((prev) =>
+      prev && prev.id === taskId ? data.task : prev
+    );
+
+    setMessage(
+      discussionLocked
+        ? "Discussion locked successfully."
+        : "Discussion unlocked successfully."
+    );
   };
 
   return (
@@ -274,6 +383,8 @@ function DashboardPage({ token, onLogout }) {
         onUpdateTask={handleUpdateTask}
         onDeleteTask={handleDeleteTask}
         onAddComment={handleAddComment}
+        onDeleteComment={handleDeleteComment}
+        onToggleDiscussionLock={handleToggleDiscussionLock}
       />
     </div>
   );

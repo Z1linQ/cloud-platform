@@ -18,6 +18,12 @@ router.get("/task/:taskId", async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    if (task.discussionLocked) {
+        return res.status(403).json({
+            message: "Discussion is locked",
+        });
+    }
+
     const isRelated =
       req.user.role === "ADMIN" ||
       task.creatorId === req.user.id ||
@@ -112,6 +118,49 @@ router.post("/task/:taskId", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Failed to create comment",
+      error: error.message,
+    });
+  }
+});
+
+router.delete("/:commentId", async (req, res) => {
+  try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        message: "Only admins can delete comments",
+      });
+    }
+
+    const { commentId } = req.params;
+
+    const existingComment = await prisma.comment.findUnique({
+      where: { id: commentId },
+    });
+
+    if (!existingComment) {
+      return res.status(404).json({
+        message: "Comment not found",
+      });
+    }
+
+    await prisma.comment.delete({
+      where: { id: commentId },
+    });
+
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("comment:deleted", {
+        taskId: existingComment.taskId,
+        commentId,
+      });
+    }
+
+    res.json({
+      message: "Comment deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to delete comment",
       error: error.message,
     });
   }

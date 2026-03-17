@@ -502,3 +502,182 @@ input {
     width: 100%;
   }
 }
+
+.task-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.task-card-title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.task-card-badges {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.comment-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.18);
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.task-card-middle {
+  margin-bottom: 12px;
+}
+
+.mini-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.drawer-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.drawer-tab {
+  border: 1px solid #334155;
+  background: transparent;
+  color: #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.drawer-tab.active {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.45);
+  color: #dbeafe;
+}
+
+.discussion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.full-thread-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.full-thread-modal {
+  width: min(900px, 92vw);
+  height: min(80vh, 760px);
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.full-thread-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.full-thread-title {
+  margin: 0 0 6px 0;
+  color: #f8fafc;
+}
+
+.full-thread-subtitle {
+  margin: 0;
+  color: #94a3b8;
+}
+
+.full-thread-comments {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-right: 4px;
+}
+
+.lock-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lock-pill.open {
+  background: rgba(16, 185, 129, 0.18);
+  color: #86efac;
+}
+
+.lock-pill.locked {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+
+.discussion-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.discussion-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.comment-delete-btn {
+  margin-top: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}

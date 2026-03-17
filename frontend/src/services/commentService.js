@@ -34,3 +34,20 @@ export async function createComment(token, taskId, content) {
 
   return data;
 }
+
+export async function deleteComment(token, commentId) {
+  const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to delete comment");
+  }
+
+  return data;
+}
