@@ -29,6 +29,7 @@ model User {
 
   createdTasks  Task[]  @relation("CreatedTasks")
   assignedTasks Task[]  @relation("AssignedTasks")
+  comments      Comment[]
 }
 
 model Task {
@@ -44,4 +45,17 @@ model Task {
 
   creator     User       @relation("CreatedTasks", fields: [creatorId], references: [id])
   assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  comments    Comment[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  taskId    String
+  authorId  String
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }

@@ -47,6 +47,12 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        message: "Only admins can create tasks",
+      });
+    }
+
     const { title, description, assigneeId, status } = req.body;
 
     if (!title) {
@@ -55,21 +61,13 @@ router.post("/", async (req, res) => {
       });
     }
 
-    let finalAssigneeId = null;
-
-    if (req.user.role === "ADMIN") {
-      finalAssigneeId = assigneeId || null;
-    } else {
-      finalAssigneeId = req.user.id;
-    }
-
     const task = await prisma.task.create({
       data: {
         title,
         description,
         status: status || "TODO",
         creatorId: req.user.id,
-        assigneeId: finalAssigneeId,
+        assigneeId: assigneeId || null,
       },
       include: {
         creator: {
@@ -83,7 +81,7 @@ router.post("/", async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-        io.emit("task:created", task);
+      io.emit("task:created", task);
     }
 
     res.status(201).json({
@@ -113,10 +111,11 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    const canEdit =
-      req.user.role === "ADMIN" ||
+    const isRelatedUser =
       existingTask.creatorId === req.user.id ||
       existingTask.assigneeId === req.user.id;
+
+    const canEdit = req.user.role === "ADMIN" || isRelatedUser;
 
     if (!canEdit) {
       return res.status(403).json({
@@ -126,12 +125,13 @@ router.put("/:id", async (req, res) => {
 
     const updateData = {};
 
-    if (title !== undefined) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (status !== undefined) updateData.status = status;
-
-    if (req.user.role === "ADMIN" && assigneeId !== undefined) {
-      updateData.assigneeId = assigneeId || null;
+    if (req.user.role === "ADMIN") {
+      if (title !== undefined) updateData.title = title;
+      if (description !== undefined) updateData.description = description;
+      if (status !== undefined) updateData.status = status;
+      if (assigneeId !== undefined) updateData.assigneeId = assigneeId || null;
+    } else {
+      if (status !== undefined) updateData.status = status;
     }
 
     const updatedTask = await prisma.task.update({
@@ -149,7 +149,7 @@ router.put("/:id", async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-        io.emit("task:updated", updatedTask);
+      io.emit("task:updated", updatedTask);
     }
 
     res.json({
