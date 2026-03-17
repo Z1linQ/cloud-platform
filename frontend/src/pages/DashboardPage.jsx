@@ -19,7 +19,7 @@ import Board from "../components/board/Board";
 import CreateTaskPanel from "../components/admin/CreateTaskPanel";
 import TaskDrawer from "../components/board/TaskDrawer";
 
-function DashboardPage({ token, onLogout }) {
+function DashboardPage({ token, onLogout, theme, toggleTheme }) {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -329,9 +329,15 @@ function DashboardPage({ token, onLogout }) {
           </p>
         </div>
 
-        <button className="danger-btn" onClick={onLogout}>
-          Logout
-        </button>
+        <div className="topbar-actions">
+          <button className="theme-toggle-btn" onClick={toggleTheme}>
+            {theme === "dark" ? "☀️ Light" : "🌙 Dark"}
+          </button>
+
+          <button className="danger-btn" onClick={onLogout}>
+            Logout
+          </button>
+        </div>
       </header>
 
       {user?.role === "ADMIN" ? (

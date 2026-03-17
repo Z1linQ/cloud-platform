@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { loginRequest, registerRequest } from "../services/authService";
 
-function AuthPage({ onAuthSuccess }) {
+function AuthPage({ onAuthSuccess, theme, toggleTheme }) {
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("zilin@example.com");
@@ -43,6 +43,12 @@ function AuthPage({ onAuthSuccess }) {
 
   return (
     <div className="auth-page">
+      <div className="theme-toggle-row">
+        <button className="theme-toggle-btn" onClick={toggleTheme}>
+          {theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        </button>
+      </div>
+
       <div className="auth-card">
         <h1>Collaborative Cloud Platform</h1>
         <p className="auth-subtitle">Kanban Board - Step 1</p>
