@@ -113,8 +113,8 @@ Recommended environment:
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd collab-cloud-platform
+git clone https://github.com/Z1linQ/cloud-platform.git
+cd cloud-platform
 ```
 
 ### 2. Create the root `.env`
