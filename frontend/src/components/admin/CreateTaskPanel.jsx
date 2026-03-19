@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import MultiAssignSelector from "../common/MultiAssignSelector";
 
 function CreateTaskPanel({ users, onCreateTask }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeIds, setAssigneeIds] = useState([]);
   const [status, setStatus] = useState("TODO");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -17,13 +18,13 @@ function CreateTaskPanel({ users, onCreateTask }) {
       await onCreateTask({
         title,
         description,
-        assigneeId: assigneeId || null,
+        assigneeIds,
         status,
       });
 
       setTitle("");
       setDescription("");
-      setAssigneeId("");
+      setAssigneeIds([]);
       setStatus("TODO");
       setMessage("Task created successfully.");
     } catch (error) {
@@ -52,29 +53,28 @@ function CreateTaskPanel({ users, onCreateTask }) {
           onChange={(e) => setDescription(e.target.value)}
         />
 
-        <div className="create-row">
-          <select
-            className="input"
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-          >
-            <option value="">Unassigned</option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} ({user.role})
-              </option>
-            ))}
-          </select>
+        <div className="create-row create-row-stacked">
+          <div>
+            <label className="field-label">Assign Members</label>
+            <MultiAssignSelector
+              users={users}
+              selectedIds={assigneeIds}
+              onChange={setAssigneeIds}
+            />
+          </div>
 
-          <select
-            className="input"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="TODO">TODO</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="DONE">DONE</option>
-          </select>
+          <div>
+            <label className="field-label">Initial Status</label>
+            <select
+              className="input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+          </div>
         </div>
 
         <button className="primary-btn" disabled={loading}>

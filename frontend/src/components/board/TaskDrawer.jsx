@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import FullThreadModal from "../comments/FullThreadModal";
+import MultiAssignSelector from "../common/MultiAssignSelector";
 
 function formatDate(dateString) {
   if (!dateString) return "N/A";
@@ -19,7 +20,7 @@ function TaskDrawer({
   onToggleDiscussionLock,
 }) {
   const [status, setStatus] = useState("TODO");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeIds, setAssigneeIds] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -42,8 +43,8 @@ function TaskDrawer({
     if (!task) return;
 
     setStatus(task.status || "TODO");
-    setAssigneeId(task.assignee?.id || "");
-  }, [task?.id, task?.status, task?.assignee?.id]);
+    setAssigneeIds((task.assignees || []).map((user) => user.id));
+  }, [task?.id, task?.status, task?.assignees]);
 
   useEffect(() => {
     if (activeTab !== "discussion") return;
@@ -66,7 +67,7 @@ function TaskDrawer({
       const payload = isAdmin
         ? {
             status,
-            assigneeId: assigneeId || null,
+            assigneeIds,
           }
         : {
             status,
@@ -146,7 +147,9 @@ function TaskDrawer({
                 {task.status}
               </span>
               <span className="soft-pill">
-                {task.assignee?.name || "Unassigned"}
+                {task.assignees?.length
+                  ? task.assignees.map((user) => user.name).join(", ")
+                  : "Unassigned"}
               </span>
               <span className="soft-pill">💬 {comments.length}</span>
               <span
@@ -202,7 +205,11 @@ function TaskDrawer({
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Assignee</span>
-                  <strong>{task.assignee?.name || "Unassigned"}</strong>
+                  <strong>
+                    {task.assignees?.length
+                      ? task.assignees.map((user) => user.name).join(", ")
+                      : "Unassigned"}
+                  </strong>
                 </div>
                 <div className="meta-item">
                   <span className="meta-label">Created At</span>
@@ -231,19 +238,12 @@ function TaskDrawer({
 
               {isAdmin ? (
                 <>
-                  <label className="field-label">Assignee</label>
-                  <select
-                    className="input"
-                    value={assigneeId}
-                    onChange={(e) => setAssigneeId(e.target.value)}
-                  >
-                    <option value="">Unassigned</option>
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name} ({u.role})
-                      </option>
-                    ))}
-                  </select>
+                  <label className="field-label">Assigned Members</label>
+                  <MultiAssignSelector
+                    users={users}
+                    selectedIds={assigneeIds}
+                    onChange={setAssigneeIds}
+                  />
                 </>
               ) : null}
 

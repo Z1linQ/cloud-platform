@@ -10,6 +10,29 @@ function getStartDate(task) {
   return formatDate(task.updatedAt);
 }
 
+function renderAssignees(task) {
+  const assignees = task.assignees || [];
+
+  if (assignees.length === 0) {
+    return <span className="mini-pill">Unassigned</span>;
+  }
+
+  const visible = assignees.slice(0, 2);
+
+  return (
+    <div className="assignee-pill-group">
+      {visible.map((assignee) => (
+        <span key={assignee.id} className="mini-pill">
+          {assignee.name}
+        </span>
+      ))}
+      {assignees.length > 2 ? (
+        <span className="mini-pill">+{assignees.length - 2}</span>
+      ) : null}
+    </div>
+  );
+}
+
 function TaskCard({ task, onClick, onDragStart }) {
   const commentCount = task?._count?.comments || 0;
 
@@ -29,9 +52,7 @@ function TaskCard({ task, onClick, onDragStart }) {
       </div>
 
       <div className="task-card-middle">
-        <span className="mini-pill">
-          {task.assignee?.name || "Unassigned"}
-        </span>
+        {renderAssignees(task)}
       </div>
 
       <div className="task-card-footer">

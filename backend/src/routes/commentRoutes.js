@@ -10,24 +10,27 @@ router.get("/task/:taskId", async (req, res) => {
   try {
     const { taskId } = req.params;
 
-    const task = await prisma.task.findUnique({
+    const fullTask = await prisma.task.findUnique({
       where: { id: taskId },
+      include: {
+        assignments: true,
+      },
     });
 
-    if (!task) {
+    if (!fullTask) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    if (task.discussionLocked) {
-        return res.status(403).json({
-            message: "Discussion is locked",
-        });
+    if (fullTask.discussionLocked) {
+      return res.status(403).json({
+        message: "Discussion is locked",
+      });
     }
 
     const isRelated =
       req.user.role === "ADMIN" ||
-      task.creatorId === req.user.id ||
-      task.assigneeId === req.user.id;
+      fullTask.creatorId === req.user.id ||
+      fullTask.assignments.some((assignment) => assignment.userId === req.user.id);
 
     if (!isRelated) {
       return res.status(403).json({ message: "Forbidden" });
@@ -71,18 +74,27 @@ router.post("/task/:taskId", async (req, res) => {
       return res.status(400).json({ message: "Comment content is required" });
     }
 
-    const task = await prisma.task.findUnique({
+    const fullTask = await prisma.task.findUnique({
       where: { id: taskId },
+      include: {
+        assignments: true,
+      },
     });
 
-    if (!task) {
+    if (!fullTask) {
       return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (fullTask.discussionLocked) {
+      return res.status(403).json({
+        message: "Discussion is locked",
+      });
     }
 
     const isRelated =
       req.user.role === "ADMIN" ||
-      task.creatorId === req.user.id ||
-      task.assigneeId === req.user.id;
+      fullTask.creatorId === req.user.id ||
+      fullTask.assignments.some((assignment) => assignment.userId === req.user.id);
 
     if (!isRelated) {
       return res.status(403).json({ message: "Forbidden" });

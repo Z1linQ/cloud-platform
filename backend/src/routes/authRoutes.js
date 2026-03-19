@@ -49,6 +49,16 @@ router.post("/register", async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("user:created", {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      });
+    }
+
     res.status(201).json({
       message: "User registered successfully",
       token,

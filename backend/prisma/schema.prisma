@@ -19,34 +19,45 @@ enum TaskStatus {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   name         String
-  email        String   @unique
+  email        String           @unique
   passwordHash String
-  role         Role     @default(MEMBER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         Role             @default(MEMBER)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
-  createdTasks  Task[]  @relation("CreatedTasks")
-  assignedTasks Task[]  @relation("AssignedTasks")
-  comments      Comment[]
+  createdTasks Task[]           @relation("CreatedTasks")
+  assignments  TaskAssignment[]
+  comments     Comment[]
 }
 
 model Task {
-  id               String     @id @default(uuid())
+  id               String           @id @default(uuid())
   title            String
   description      String?
-  status           TaskStatus @default(TODO)
-  discussionLocked Boolean    @default(false)
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  status           TaskStatus       @default(TODO)
+  discussionLocked Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   creatorId        String
-  assigneeId       String?
+  creator          User             @relation("CreatedTasks", fields: [creatorId], references: [id])
 
-  creator          User       @relation("CreatedTasks", fields: [creatorId], references: [id])
-  assignee         User?      @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  assignments      TaskAssignment[]
   comments         Comment[]
+}
+
+model TaskAssignment {
+  id         String   @id @default(uuid())
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
 }
 
 model Comment {

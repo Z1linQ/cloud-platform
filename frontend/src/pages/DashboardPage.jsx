@@ -33,7 +33,7 @@ function DashboardPage({ token, onLogout, theme, toggleTheme }) {
       todo: tasks.filter((t) => t.status === "TODO").length,
       inProgress: tasks.filter((t) => t.status === "IN_PROGRESS").length,
       done: tasks.filter((t) => t.status === "DONE").length,
-      unassigned: tasks.filter((t) => !t.assignee).length,
+      unassigned: tasks.filter((t) => !t.assignees || t.assignees.length === 0).length,
     };
   }, [tasks]);
 
@@ -121,6 +121,10 @@ function DashboardPage({ token, onLogout, theme, toggleTheme }) {
     });
 
     socket.on("task:deleted", async () => {
+      await loadData();
+    });
+
+    socket.on("user:created", async () => {
       await loadData();
     });
 
