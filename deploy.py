@@ -18,8 +18,7 @@ run_command("docker info > nul 2>&1", "Docker daemon is not reachable. Start Doc
 # 2. Check Swarm status
 print("==> Checking Docker Swarm status...")
 result = subprocess.run(
-    "docker info --format '{{.Swarm.LocalNodeState}}'",
-    shell=True,
+    ["docker", "info", "--format", "{{.Swarm.LocalNodeState}}"],
     capture_output=True,
     text=True
 )

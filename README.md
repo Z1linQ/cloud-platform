@@ -417,6 +417,35 @@ docker stack ps collab
 docker stack rm collab
 ```
 
+### Initial Demo Data Setup for Swarm (recommended before presentation)
+
+For consistent presentation demo experience, set up demo accounts and tasks after deploying the stack.
+
+After `docker stack deploy -c docker-stack.yml collab` is complete and all services are running:
+
+1. Open browser and navigate to `http://localhost:5173`
+
+2. Register an ADMIN account:
+   ```
+   Email: admin@example.com
+   Password: Password123!
+   ```
+
+3. Register a MEMBER account in a different browser/incognito:
+   ```
+   Email: member@example.com
+   Password: Password123!
+   ```
+
+4. Promote admin account to ADMIN role:
+   ```bash
+   docker exec -it $(docker ps -q -f name=collab_db) psql -U collab_user -d collab_db -c "UPDATE \"User\" SET role='ADMIN' WHERE email='admin@example.com';"
+   ```
+
+5. Create demo tasks by logging in as admin and using the UI to create 2-3 sample tasks assigned to the member.
+
+**Note:** This ensures both `docker compose` and `docker stack` deployments have identical initial data for presentation, avoiding confusion about demo readiness.
+
 ### Stateful Design Note
 
 PostgreSQL data is stored in a named volume `pgdata`.
