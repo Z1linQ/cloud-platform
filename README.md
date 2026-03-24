@@ -365,8 +365,135 @@ For local development, each teammate should:
 
 ---
 
+## Docker Swarm Deployment
+
+This repository includes a Swarm stack file for orchestration demo and service management.
+
+### Files
+
+* `docker-stack.yml` for Swarm stack services
+* `deploy.py` for one-command deploy on Windows PowerShell
+
+### Quick Deploy (PowerShell)
+
+From project root:
+
+python deploy.py
+
+The script will:
+
+1. Initialize Swarm if not active
+2. Build backend and frontend images
+3. Deploy stack `collab`
+4. Print running Swarm services
+
+### Manual Deploy Commands
+
+```bash
+docker swarm init
+docker build -t collab_backend:swarm ./backend
+docker build -t collab_frontend:swarm ./frontend
+docker stack deploy -c docker-stack.yml collab
+docker stack services collab
+```
+
+### Scale Services (demo for orchestration)
+
+```bash
+docker service scale collab_frontend=2
+docker service scale collab_backend=2
+docker stack services collab
+```
+
+### Inspect Service Tasks
+
+```bash
+docker stack ps collab
+```
+
+### Remove Stack
+
+```bash
+docker stack rm collab
+```
+
+### Initial Demo Data Setup for Swarm (recommended before presentation)
+
+For consistent presentation demo experience, set up demo accounts and tasks after deploying the stack.
+
+After `docker stack deploy -c docker-stack.yml collab` is complete and all services are running:
+
+1. Open browser and navigate to `http://localhost:5173`
+
+2. Register an ADMIN account:
+   ```
+   Email: admin@example.com
+   Password: Password123!
+   ```
+
+3. Register a MEMBER account in a different browser/incognito:
+   ```
+   Email: member@example.com
+   Password: Password123!
+   ```
+
+4. Promote admin account to ADMIN role:
+   ```bash
+   docker exec -it $(docker ps -q -f name=collab_db) psql -U collab_user -d collab_db -c "UPDATE \"User\" SET role='ADMIN' WHERE email='admin@example.com';"
+   ```
+
+5. Create demo tasks by logging in as admin and using the UI to create 2-3 sample tasks assigned to the member.
+
+**Note:** This ensures both `docker compose` and `docker stack` deployments have identical initial data for presentation, avoiding confusion about demo readiness.
+
+### Stateful Design Note
+
+PostgreSQL data is stored in a named volume `pgdata`.
+This ensures application data survives container restarts and service redeployments.
+
+---
+
+## Monitoring and Observability
+
+Prometheus and Grafana are included in the Swarm stack for metrics collection and visualization.
+
+### Monitoring Services
+
+* Prometheus: `http://localhost:9090`
+* Grafana: `http://localhost:3001`
+
+Default Grafana credentials (can be overridden in `.env`):
+
+* username: `admin`
+* password: `admin`
+
+### What is monitored
+
+* Backend request counter: `http_requests_total`
+* Backend CPU Usage
+* Backend Memory Usage
+
+### Quick verification commands
+
+```bash
+docker stack services collab
+curl http://localhost:3000/metrics
+curl http://localhost:9090/-/healthy
+```
+
+### Demo flow for presentation
+
+1. Open Grafana using http://localhost:3001
+2. Import ECE1779MonitorDashboard.json
+3. Go to the dashboard and check the visualized monitoring
+
+---
+
 ## Current Deployment Scope
 
-This README currently documents **local development only**.
+This README documents both:
+
+* local development via Docker Compose
+* local orchestration demo via Docker Swarm
 
 Server deployment steps, production environment variables, and cloud configuration will be documented later after the deployment environment is finalized.
