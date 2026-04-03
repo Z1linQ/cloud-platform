@@ -63,7 +63,7 @@ services:
     networks:
       - collab_net
     deploy:
-      replicas: 1
+      replicas: 2
       restart_policy:
         condition: on-failure
       update_config:
@@ -102,6 +102,8 @@ services:
         mode: ingress
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - collab_net
     deploy:
