@@ -4,7 +4,7 @@
 
 | Name | Student Number | Preferred Email | Main Responsibility |
 |------|----------------|-----------------|---------------------|
-| Qingyun Jia | TODO | qjia2@ualberta.ca | Backend implementation, database schema design, authentication, task/comment APIs, RBAC |
+| Qingyun Jia | 1008308172 | qingyun.jia@mail.utoronto.ca | Backend implementation, database schema design, authentication, task/comment APIs, RBAC |
 | Jiaming Liu | 1006736383 | jiaming.liu@mail.utoronto.ca | Frontend workflow validation, CI workflow, backup script, documentation and report preparation |
 | Zilin Qiu | TODO | zilin.qiu@mail.utoronto.ca | Frontend feature development, WebSocket integration, Docker/Swarm deployment, monitoring |
 
