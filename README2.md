@@ -4,21 +4,21 @@
 
 | Name | Student Number | Preferred Email | Main Responsibility |
 |------|----------------|-----------------|---------------------|
-| Qingyun Jia | TODO | qjia2@ualberta.ca | Backend, database schema, authentication, task/comment APIs, RBAC |
-| Jiaming Liu | TODO | jiaming.liu@mail.utoronto.ca | Frontend UI, user interaction flow, CI workflow, backup script, report support |
-| Zilin Qiu | TODO | zilin.qiu@mail.utoronto.ca | Frontend integration, WebSocket collaboration features, Docker/Swarm deployment, monitoring |
+| Qingyun Jia | TODO | qjia2@ualberta.ca | Backend implementation, database schema design, authentication, task/comment APIs, RBAC |
+| Jiaming Liu | 1006736383 | jiaming.liu@mail.utoronto.ca | Frontend workflow validation, CI workflow, backup script, documentation and report preparation |
+| Zilin Qiu | TODO | zilin.qiu@mail.utoronto.ca | Frontend feature development, WebSocket integration, Docker/Swarm deployment, monitoring |
 
 ## 2. Motivation
 
-Many small or educational teams need a lightweight collaboration platform for organizing tasks, assigning responsibilities, and tracking progress in real time. Commercial task management systems often have three drawbacks for this context: increasing subscription cost, limited control over deployment and data ownership, and low flexibility for experimenting with cloud-native architecture.
+Many small teams and academic project groups need a lightweight collaboration platform for organizing tasks, assigning responsibilities, and tracking progress in real time. However, commercial task management systems often introduce recurring subscription costs, limited control over data ownership and deployment, and restricted flexibility for experimenting with cloud-native architectures.
 
-This project was chosen to address those limitations by building a self-hostable collaborative Kanban platform that combines real-time task synchronization, role-aware access control, persistent PostgreSQL storage, and containerized deployment. The project is also valuable as a practical cloud computing exercise because it integrates application development, data persistence, orchestration, monitoring, and CI automation in a single system.
+This project was therefore selected to address these limitations by developing a self-hostable collaborative Kanban platform that integrates real-time task synchronization, role-based access control, persistent PostgreSQL storage, and containerized deployment. From a course perspective, the project is also meaningful because it combines application development, stateful storage, service orchestration, monitoring, and CI automation within one end-to-end cloud system.
 
 ## 3. Objectives
 
-The goal of this project was to implement a cloud-native collaborative task management application in which authenticated users can create, assign, update, and discuss tasks with persistent state and near real-time visibility across clients.
+The objective of this project was to implement a cloud-native collaborative task management application in which authenticated users can create, assign, update, and discuss tasks while preserving application state and receiving near real-time updates across clients.
 
-More specifically, our team aimed to:
+Specifically, our team aimed to:
 
 - Provide secure authentication and role-based authorization for `ADMIN` and `MEMBER` users.
 - Support Kanban-style task tracking with assignment, status updates, and discussion threads.
@@ -28,7 +28,7 @@ More specifically, our team aimed to:
 - Use Docker Swarm for stack deployment, service restart policy, and frontend replication.
 - Expose monitoring metrics through Prometheus and visualize them in Grafana dashboards.
 - Add a GitHub Actions workflow so that pushes and pull requests automatically trigger backend/frontend CI checks.
-- Provide a database backup script to export PostgreSQL data.
+- Provide a database backup script for exporting PostgreSQL data.
 
 ## 4. Technical Stack
 
@@ -50,28 +50,28 @@ More specifically, our team aimed to:
 
 ### Architecture Summary
 
-The frontend runs as a Vite-based React application and communicates with the backend through REST APIs and Socket.IO. The backend serves authentication, task, user, and comment endpoints, emits real-time update events, and exposes `/metrics`, `/api/health`, and `/api/db-health`. PostgreSQL stores all persistent entities, and Docker volumes preserve database and monitoring data across container restarts. Prometheus scrapes backend metrics, while Grafana automatically loads the provided dashboard JSON through provisioning files under `monitoring/grafana`.
+The frontend is implemented as a Vite-based React application and communicates with the backend through REST APIs and Socket.IO. The backend provides authentication, task, user, and comment endpoints, emits real-time update events, and exposes `/metrics`, `/api/health`, and `/api/db-health`. PostgreSQL stores all persistent entities, while Docker volumes preserve database and monitoring data across container restarts. Prometheus scrapes backend metrics, and Grafana automatically provisions both its Prometheus datasource and dashboard configuration from files under `monitoring/grafana`.
 
 ## 5. Features and Requirement Coverage
 
 ### 5.1 Authentication and Role-Based Access Control
 
-Users can register and log in through the frontend. The backend issues JWT tokens and uses middleware to authenticate requests. Two roles are supported:
+Users can register and log in through the frontend. The backend issues JWT tokens and applies authentication middleware to protect API requests. Two roles are supported:
 
 - `MEMBER`: can view assigned/related tasks, update task status when authorized, and participate in discussions.
 - `ADMIN`: can create tasks, reassign users, delete tasks/comments, and lock or unlock task discussions.
 
-This feature satisfies the advanced requirement for role-based access control and ensures that task management actions are restricted by user responsibility.
+This feature satisfies the advanced role-based access control requirement and ensures that task management operations are restricted according to user responsibility.
 
 ### 5.2 Kanban Task Management
 
-The application provides a Kanban workflow with three task states: `TODO`, `IN_PROGRESS`, and `DONE`. Admin users can create tasks, edit title/description/assignees, and delete tasks. Members can update the status of tasks they are related to. Each task card includes a comment count badge and opens a task drawer with details and discussion tabs.
+The application provides a Kanban workflow with three task states: `TODO`, `IN_PROGRESS`, and `DONE`. Admin users can create tasks, edit task metadata and assignees, and delete tasks. Members can update the status of tasks with which they are associated. Each task card displays a comment count badge and opens a task drawer containing task details and discussion tabs.
 
 This feature fulfills the core objective of collaborative task tracking and demonstrates stateful CRUD operations backed by PostgreSQL.
 
 ### 5.3 Real-Time Collaboration
 
-The backend initializes a Socket.IO server and emits events such as `task:created`, `task:updated`, `task:deleted`, `comment:created`, and `comment:deleted`. The frontend listens to these events so that users can see task board and discussion updates without manual refresh.
+The backend initializes a Socket.IO server and emits events including `task:created`, `task:updated`, `task:deleted`, `comment:created`, and `comment:deleted`. The frontend subscribes to these events so that task board and discussion updates are reflected without requiring manual page refresh.
 
 This implements the advanced real-time functionality requirement and improves collaboration usability for distributed teams.
 
@@ -83,9 +83,9 @@ This satisfies the state management requirement and ensures durable project data
 
 ### 5.5 Containerization and Orchestration
 
-The frontend and backend each include a Dockerfile, and `docker-compose.yml` defines a local development stack with backend, frontend, and database services. For orchestration, `docker-stack.yml` deploys a Swarm stack with overlay networking, restart policies, and two frontend replicas for basic replication/load-balancing demonstration.
+The frontend and backend each include a Dockerfile, and `docker-compose.yml` defines the local development stack for frontend, backend, and database services. For orchestration, `docker-stack.yml` deploys a Docker Swarm stack with an overlay network, service restart policies, and two frontend replicas to demonstrate basic replication and load balancing.
 
-This satisfies the containerization and orchestration requirements. One design decision was to keep backend replicas at 1 because Socket.IO multi-instance synchronization was not implemented with a shared adapter such as Redis. This avoids inconsistent broadcast behavior across backend replicas.
+This satisfies the containerization and orchestration requirements. One intentional design decision was to keep the backend replica count at 1 because Socket.IO multi-instance synchronization was not implemented with a shared adapter such as Redis. This avoids inconsistent broadcast behavior across multiple backend replicas.
 
 ### 5.6 Monitoring
 
@@ -104,7 +104,7 @@ The GitHub Actions workflow runs on pushes to `main`/`master` and on pull reques
 - **backend job:** checkout, setup Node.js 20, `npm install`, `npm run prisma:generate`
 - **frontend job:** checkout, setup Node.js 20, reinstall frontend dependencies, `npm run build`
 
-This implements the CI portion of the proposed CI/CD advanced feature by automatically validating that backend dependency setup and frontend production build still pass after code changes.
+This implements the CI portion of the proposed CI/CD advanced feature by automatically validating backend dependency setup and frontend production build correctness after code changes.
 
 ### 5.8 Database Backup
 
@@ -133,7 +133,7 @@ After the services start, open:
 2. Create a new account from the authentication page.
 3. Log in with the registered email/password.
 
-By default, newly registered users are `MEMBER` users.
+By default, newly registered accounts are assigned the `MEMBER` role.
 
 ### 6.3 Promote an ADMIN User
 
@@ -143,11 +143,11 @@ To test admin-only functionality, first register a user through the UI, then pro
 docker compose exec db psql -U collab_user -d collab_db -c "UPDATE \"User\" SET role='ADMIN' WHERE email='admin@example.com';"
 ```
 
-After promotion, log out and log in again so the frontend receives the updated role.
+After this update, log out and log in again so that the frontend receives the refreshed role information.
 
 ### 6.4 Create, Assign, and Update Tasks
 
-- As `ADMIN`, use the dashboard create-task panel to enter a title, optional description, and assignees.
+- As `ADMIN`, use the create-task panel to enter a title, an optional description, and assignees.
 - Move/update task status through the task controls.
 - As `MEMBER`, update only tasks that are assigned to you or created by you, depending on backend authorization.
 - Open a task card to inspect details in the task drawer.
@@ -161,7 +161,7 @@ After promotion, log out and log in again so the frontend receives the updated r
 
 ### 6.6 Switch Theme
 
-Use the UI theme toggle to switch between dark and light mode.
+Use the theme toggle in the UI to switch between dark and light modes.
 
 ### 6.7 Monitoring Dashboard
 
@@ -201,7 +201,7 @@ FRONTEND_PORT=5173
 JWT_SECRET=supersecret123
 ```
 
-If database credentials are changed after the PostgreSQL volume already exists, the old database user password may remain in the existing volume. In that case, either update the database user password inside PostgreSQL or recreate the volume.
+If database credentials are changed after the PostgreSQL volume has already been initialized, the previous database user password may still remain in the existing volume. In that case, either update the user password directly inside PostgreSQL or recreate the database volume.
 
 ### 7.2 Database Migration
 
@@ -231,7 +231,7 @@ curl http://localhost:3000/api/health
 curl http://localhost:3000/api/db-health
 ```
 
-We used these commands to verify that backend, frontend, and PostgreSQL were running, and to diagnose one database authentication issue caused by mismatch between `.env` and an older PostgreSQL volume state.
+These commands were used to verify that the backend, frontend, and PostgreSQL services were running correctly, and to diagnose a database authentication failure caused by a mismatch between `.env` and the state stored in an older PostgreSQL volume.
 
 ### 7.4 Swarm Deployment
 
@@ -243,7 +243,7 @@ docker stack services collab
 docker stack ps collab
 ```
 
-`deploy.py` checks Docker daemon availability, initializes Swarm when needed, builds backend/frontend images, deploys `docker-stack.yml`, and lists services.
+`deploy.py` checks Docker daemon availability, initializes Swarm when needed, builds backend and frontend images, deploys `docker-stack.yml`, and lists stack services.
 
 ### 7.5 CI Workflow Verification
 
@@ -257,40 +257,40 @@ After pushing to GitHub, inspect the Actions tab to confirm both `backend` and `
 - **Grafana URL in Swarm mode:** `http://localhost:3001`
 - **Prometheus URL in Swarm mode:** `http://localhost:9090`
 
-At the time of writing, the repository is fully runnable locally with Docker Compose, and Swarm stack deployment is available through `deploy.py`. If a public cloud VM or domain is finalized before submission, its URL should be inserted into the live URL field above.
+At the time of writing, the repository is fully runnable in a local environment with Docker Compose, and Swarm stack deployment is available through `deploy.py`. If a public cloud VM or domain is finalized before submission, the corresponding endpoint should be inserted into the live URL field above.
 
 ## 9. AI Assistance and Verification Summary
 
-AI tools were used as coding and documentation support, mainly for:
+AI tools were used as implementation and documentation support, primarily for:
 
 - organizing proposal/report structure in Markdown
 - suggesting CI workflow structure and DevOps troubleshooting steps
 - debugging Docker/PostgreSQL backup and Prisma authentication issues
 - drafting concise explanations for architectural decisions and implementation tradeoffs
 
-The team did not treat AI output as automatically correct. One representative AI limitation was that a backup script suggestion initially assumed the database name from `.env` matched the real PostgreSQL database inside the persistent volume. In practice, the old volume had been initialized with a different database name, causing `pg_dump` to fail and generating an empty SQL file. We verified this by querying PostgreSQL directly with `psql -l`, then fixed the environment/database mismatch and added shell error handling in `backup.sh`.
+The team did not treat AI-generated output as automatically correct. One representative limitation was that an initial backup-script suggestion implicitly assumed that the database name defined in `.env` matched the actual PostgreSQL database stored in the persistent volume. In practice, the existing volume had been initialized with a different database name, which caused `pg_dump` to fail and produced an empty SQL file. This issue was verified by querying PostgreSQL directly with `psql -l`, after which the environment/database mismatch was corrected and explicit shell error handling was added to `backup.sh`.
 
-Correctness was verified through technical means including Docker container status checks, backend and database health endpoints, Prisma migration commands, PostgreSQL table inspection, application logs, manual UI testing, and CI results in GitHub Actions.
+Correctness was verified through Docker container status inspection, backend/database health endpoints, Prisma migration commands, PostgreSQL table inspection, application logs, manual UI testing, and CI results from GitHub Actions.
 
-Detailed AI interaction examples should be documented in `ai-session.md` as requested by the course instructions.
+Detailed AI interaction examples are intended to be documented separately in `ai-session.md`, as required by the course instructions.
 
 ## 10. Individual Contributions
 
 ### Qingyun Jia
 
-- Implemented backend and database-related features including authentication, Prisma schema/migration work, task APIs, comment APIs, and authorization logic.
+- Implemented backend and database-related functionality, including authentication, Prisma schema/migration work, task APIs, comment APIs, and authorization logic.
 - Fixed deployment script behavior in `deploy.py` and contributed to Swarm/monitoring setup.
 - Participated in backend testing and database troubleshooting.
 
-Evidence in Git history includes commits by `Qingyun Jia`, such as backend/deployment related updates and the merged `Qingyun` branch.
+Evidence in the Git history includes commits authored by `Qingyun Jia`, including backend/deployment updates and changes merged from the `Qingyun` branch.
 
 ### Jiaming Liu
 
-- Contributed to frontend-facing workflow validation, CI workflow creation, backup script implementation, Git branch/merge operations, and documentation/report drafting.
+- Contributed to frontend workflow validation, CI workflow creation, backup script implementation, Git branch/merge operations, and documentation/report drafting.
 - Diagnosed and fixed GitHub Actions frontend build failure caused by frontend dependency installation differences on Linux runners.
 - Helped validate local runtime health by checking container states, backend health endpoints, database migration status, and PostgreSQL tables.
 
-Evidence in Git history includes commits by `bjxx-liu`, such as `Add CI workflow, Grafana provisioning, and backup script` and `Fix frontend CI dependency install`.
+Evidence in the Git history includes commits authored by `bjxx-liu`, such as `Add CI workflow, Grafana provisioning, and backup script` and `Fix frontend CI dependency install`.
 
 ### Zilin Qiu
 
@@ -298,12 +298,12 @@ Evidence in Git history includes commits by `bjxx-liu`, such as `Add CI workflow
 - Contributed Docker/Swarm and monitoring-related integration and maintained the main repository history.
 - Coordinated repository structure and user-facing feature documentation.
 
-Evidence in Git history includes commits by `Z1linQ`, such as `Skeleton done`, `version0.2 websocket sync added`, `version 0.4 Update comments functionality`, and README updates.
+Evidence in the Git history includes commits authored by `Z1linQ`, such as `Skeleton done`, `version0.2 websocket sync added`, `version 0.4 Update comments functionality`, and README updates.
 
 ## 11. Lessons Learned and Concluding Remarks
 
-This project demonstrated that building a collaborative cloud application requires careful coordination across frontend state, backend authorization, database persistence, and deployment configuration. A key lesson was that containerized services can still fail due to environment drift, especially when old persistent volumes preserve previous database credentials or schema assumptions. Another lesson was that real-time communication becomes more complicated under horizontal backend scaling; without a shared Socket.IO adapter, increasing backend replicas may lead to inconsistent event delivery.
+This project demonstrated that building a collaborative cloud application requires careful coordination across frontend state management, backend authorization, database persistence, and deployment configuration. A key lesson was that containerized services can still fail because of environment drift, especially when persistent volumes retain earlier database credentials or schema assumptions. Another important lesson was that real-time communication becomes more complex under horizontal backend scaling; without a shared Socket.IO adapter, increasing backend replicas may lead to inconsistent event delivery.
 
 We also learned that CI failures may appear only in Linux-based GitHub runners even when local macOS development succeeds, especially when dependency resolution includes optional native packages. Monitoring integration was useful not only as a course requirement but also as a practical way to inspect backend request behavior.
 
-Overall, the project achieved a functional self-hosted collaborative task management platform with authentication, RBAC, real-time synchronization, persistent PostgreSQL storage, Docker-based deployment, Swarm orchestration support, Prometheus/Grafana monitoring, CI validation, and manual database backup. Future improvements include a public cloud production deployment URL, scheduled offsite backups, automated admin management in the UI, backend multi-replica Socket.IO support through Redis, and a more complete automated test suite.
+Overall, the project delivered a functional self-hosted collaborative task management platform with authentication, RBAC, real-time synchronization, persistent PostgreSQL storage, Docker-based deployment, Swarm orchestration support, Prometheus/Grafana monitoring, CI validation, and manual database backup. Future improvements include public cloud production deployment, scheduled offsite backups, UI-based admin management, backend multi-replica Socket.IO support through Redis, and a more comprehensive automated test suite.
