@@ -4,9 +4,9 @@
 
 | Name | Student Number | Preferred Email | Main Responsibility |
 |------|----------------|-----------------|---------------------|
-| Qingyun Jia | 1008308172 | qingyun.jia@mail.utoronto.ca | Backend implementation, database schema design, authentication, task/comment APIs, RBAC |
+| Qingyun Jia | 1008308172 | qingyun.jia@mail.utoronto.ca | Docker/Swarm deployment, monitoring , authentication, task/comment APIs, RBAC |
 | Jiaming Liu | 1006736383 | jiaming.liu@mail.utoronto.ca | Frontend workflow validation, CI workflow, backup script, documentation and report preparation |
-| Zilin Qiu | TODO | zilin.qiu@mail.utoronto.ca | Frontend feature development, WebSocket integration, Docker/Swarm deployment, monitoring |
+| Zilin Qiu | 1012339391 | zilin.qiu@mail.utoronto.ca | Frontend feature development, WebSocket integration, Backend implementation, database schema design |
 
 ## 2. Motivation
 
@@ -278,7 +278,7 @@ Detailed AI interaction examples are intended to be documented separately in `ai
 
 ### Qingyun Jia
 
-- Implemented backend and database-related functionality, including authentication, Prisma schema/migration work, task APIs, comment APIs, and authorization logic.
+- Implemented Docker/Swarm and monitoring-related integration, theme support, README updates and maintained the main repository history.
 - Fixed deployment script behavior in `deploy.py` and contributed to Swarm/monitoring setup.
 - Participated in backend testing and database troubleshooting.
 
@@ -295,7 +295,7 @@ Evidence in the Git history includes commits authored by `bjxx-liu`, such as `Ad
 ### Zilin Qiu
 
 - Implemented the frontend Kanban UI, task board interactions, WebSocket synchronization, comment thread features, theme support, and README updates.
-- Contributed Docker/Swarm and monitoring-related integration and maintained the main repository history.
+- Implemented backend and database-related functionality, including authentication, Prisma schema/migration work, task APIs, comment APIs, and authorization logic.
 - Coordinated repository structure and user-facing feature documentation.
 
 Evidence in the Git history includes commits authored by `Z1linQ`, such as `Skeleton done`, `version0.2 websocket sync added`, `version 0.4 Update comments functionality`, and README updates.
