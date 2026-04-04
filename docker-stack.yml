@@ -63,7 +63,7 @@ services:
     networks:
       - collab_net
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
       update_config:
