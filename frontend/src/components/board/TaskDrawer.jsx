@@ -23,6 +23,7 @@ function TaskDrawer({
   const [assigneeIds, setAssigneeIds] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState("details");
   const [showFullThread, setShowFullThread] = useState(false);
@@ -33,6 +34,7 @@ function TaskDrawer({
   useEffect(() => {
     if (!task) return;
 
+    setDeleteLoading(false);
     setMessage("");
     setCommentText("");
     setActiveTab("details");
@@ -86,7 +88,7 @@ function TaskDrawer({
     const confirmed = window.confirm("Delete this task?");
     if (!confirmed) return;
 
-    setLoading(true);
+    setDeleteLoading(true);
     setMessage("");
 
     try {
@@ -94,7 +96,8 @@ function TaskDrawer({
       onClose();
     } catch (error) {
       setMessage(error.message);
-      setLoading(false);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -266,9 +269,9 @@ function TaskDrawer({
                 <button
                   className="danger-btn"
                   onClick={handleDelete}
-                  disabled={loading}
+                  disabled={deleteLoading}
                 >
-                  Delete Task
+                  {deleteLoading ? "Deleting..." : "Delete Task"}
                 </button>
               </div>
             ) : null}
