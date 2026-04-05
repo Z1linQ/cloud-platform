@@ -112,20 +112,20 @@ The `backup.sh` script loads environment variables from `.env`, runs `pg_dump` i
 
 ## 6. User Guide
 
-### 6.1 Start the Application
+### 6.1 Start the Application (Local Deployment)
+
+The local development environment has been moved to the `local-deploy` branch.  
+Please switch to this branch before starting the services.
 
 ```bash
 git clone https://github.com/Z1linQ/cloud-platform.git
 cd cloud-platform
+
+# Switch to local deployment branch
+git checkout local-deploy
+
 cp .env.example .env
 docker compose up --build
-```
-
-After the services start, open:
-
-- Frontend: `http://localhost:5173`
-- Backend health check: `http://localhost:3000/api/health`
-- Database health check: `http://localhost:3000/api/db-health`
 
 ### 6.2 Register and Log In
 
