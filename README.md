@@ -114,12 +114,13 @@ The `backup.sh` script loads environment variables from `.env`, runs `pg_dump` i
 
 ### 6.1 Start the Application (Local Deployment)
 
-The local development environment has been moved to the `local-deploy` branch.  
+The local development environment has been moved to the `local-deploy` branch and for cloud development can stay at 'main' branch
 Please switch to this branch before starting the services.
 
 ```bash
 git clone https://github.com/Z1linQ/cloud-platform.git
 cd cloud-platform
+```
 
 # Switch to local deployment branch
 git checkout local-deploy
@@ -185,15 +186,6 @@ chmod +x backup.sh
 ./backup.sh
 ls -lh backup_*.sql
 ```
-## Fly.io deployment
-
-1. login and launch fly.io by cmd: flyctl auth login
-2. Create a PostgreSQL app
-3. Create Frontend and Backend app
-4. Attach the database to the Backend app and deploy JWT_SECRET
-5. cd to the .\frontend and .\backend and flyctl deploy
-6. Check the status or check the monitoring system using the build in grafama in fly.io websit.
-
 ## Fly.io User Guidance
 1. Open the link: "https://collab-frontend-ece1779.fly.dev"
 2. Login in using admin@example.com and password is 123456 
@@ -201,6 +193,7 @@ ls -lh backup_*.sql
 4. Post a task using the admin acount and try the platform as you wish
 optional: promote your own account to admin by entering the postgreSQL in fly.io and update your account using
 UPDATE "User" SET role='ADMIN' WHERE email='you@email.com'
+
 ## 7. Development Guide
 
 ### 7.1 Environment Configuration
@@ -257,10 +250,17 @@ python3 deploy.py
 docker stack services collab
 docker stack ps collab
 ```
+### 7.5 Fly.io Deployment
+1. login and launch fly.io by cmd: flyctl auth login
+2. Create a PostgreSQL app
+3. Create Frontend and Backend app
+4. Attach the database to the Backend app and deploy JWT_SECRET
+5. cd to the .\frontend and .\backend and flyctl deploy
+6. Check the status or check the monitoring system using the build in grafama in fly.io websit.
 
 `deploy.py` checks Docker daemon availability, initializes Swarm when needed, builds backend and frontend images, deploys `docker-stack.yml`, and lists stack services.
 
-### 7.5 CI Workflow Verification
+### 7.6 CI Workflow Verification
 
 After pushing to GitHub, inspect the Actions tab to confirm both `backend` and `frontend` jobs pass. During development, the frontend job initially failed because Rollup's Linux optional package was missing in the GitHub runner environment. We updated the workflow to reinstall frontend dependencies cleanly before running `npm run build`.
 
