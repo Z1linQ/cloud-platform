@@ -196,10 +196,11 @@ ls -lh backup_*.sql
 
 ## Fly.io User Guidance
 1. Open the link: "https://collab-frontend-ece1779.fly.dev"
-2. Login in using admin@example.com and password is 123456
+2. Login in using admin@example.com and password is 123456 
 3. Regist new account as members
 4. Post a task using the admin acount and try the platform as you wish
-
+optional: promote your own account to admin by entering the postgreSQL in fly.io and update your account using
+UPDATE "User" SET role='ADMIN' WHERE email='you@email.com'
 ## 7. Development Guide
 
 ### 7.1 Environment Configuration
