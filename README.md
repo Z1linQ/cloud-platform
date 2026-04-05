@@ -325,3 +325,6 @@ This project demonstrated that building a collaborative cloud application requir
 We also learned that CI failures may appear only in Linux-based GitHub runners even when local macOS development succeeds, especially when dependency resolution includes optional native packages. Monitoring integration was useful not only as a course requirement but also as a practical way to inspect backend request behavior.
 
 Overall, the project delivered a functional self-hosted collaborative task management platform with authentication, RBAC, real-time synchronization, persistent PostgreSQL storage, Docker-based deployment, Swarm orchestration support, Prometheus/Grafana monitoring, CI validation, and manual database backup. Future improvements include public cloud production deployment, scheduled offsite backups, UI-based admin management, backend multi-replica Socket.IO support through Redis, and a more comprehensive automated test suite.
+
+## 12. Video Demo Link
+https://drive.google.com/file/d/1bnDVXS9ppTbiXYCTnf3V9ATQ8OaGTbK2/view?usp=drive_link
