@@ -266,7 +266,7 @@ After pushing to GitHub, inspect the Actions tab to confirm both `backend` and `
 
 ## 8. Deployment Information
 
-- **Live application URL:** TODO
+- **Live application URL:** https://collab-frontend-ece1779.fly.dev
 - **Local frontend URL:** `http://localhost:5173`
 - **Local backend health URL:** `http://localhost:3000/api/health`
 - **Grafana URL in Swarm mode:** `http://localhost:3001`
