@@ -1,0 +1,38 @@
+# Fly.io Frontend Configuration
+app = "collab-frontend-ece1779"
+primary_region = "syd"
+
+[build]
+  dockerfile = "frontend/Dockerfile"
+
+[[services]]
+  internal_port = 5173
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.ports]]
+    port = 443
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "5s"
+
+[checks]
+  [checks.status]
+    type = "http"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/"
+    protocol = "http"
+    expected_http_status = 200
