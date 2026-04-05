@@ -282,6 +282,9 @@ AI tools were used as implementation and documentation support, primarily for:
 - suggesting CI workflow structure and DevOps troubleshooting steps
 - debugging Docker/PostgreSQL backup and Prisma authentication issues
 - drafting concise explanations for architectural decisions and implementation tradeoffs
+- debugging Docker compose and Docker Swarm deployment issues
+- providing suggestions on backend and frontend development
+- debugging the backend API and overall functionality
 
 The team did not treat AI-generated output as automatically correct. One representative limitation was that an initial backup-script suggestion implicitly assumed that the database name defined in `.env` matched the actual PostgreSQL database stored in the persistent volume. In practice, the existing volume had been initialized with a different database name, which caused `pg_dump` to fail and produced an empty SQL file. This issue was verified by querying PostgreSQL directly with `psql -l`, after which the environment/database mismatch was corrected and explicit shell error handling was added to `backup.sh`.
 
