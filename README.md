@@ -1,499 +1,327 @@
-# Collaborative Cloud Platform
+# Final Report: Collaborative Task Management Platform
 
-A Dockerized collaborative Kanban-style cloud platform built with **React + Vite**, **Node.js + Express**, **PostgreSQL**, **Prisma**, and **Socket.IO**.
+## 1. Team Information
 
-This project is currently configured for **local development** using Docker Compose.  
-Cloud deployment instructions will be added later after the server environment is finalized.
+| Name | Student Number | Preferred Email | Main Responsibility |
+|------|----------------|-----------------|---------------------|
+| Qingyun Jia | 1008308172 | qingyun.jia@mail.utoronto.ca | Docker/Swarm deployment, monitoring , authentication, task/comment APIs, RBAC |
+| Jiaming Liu | 1006736383 | jiaming.liu@mail.utoronto.ca | Frontend workflow validation, CI workflow, backup script, documentation and report preparation |
+| Zilin Qiu | 1012339391 | zilin.qiu@mail.utoronto.ca | Frontend feature development, WebSocket integration, Backend implementation, database schema design |
 
----
+## 2. Motivation
 
-## Features
+Many small teams and academic project groups need a lightweight collaboration platform for organizing tasks, assigning responsibilities, and tracking progress in real time. However, commercial task management systems often introduce recurring subscription costs, limited control over data ownership and deployment, and restricted flexibility for experimenting with cloud-native architectures.
 
-### Authentication and Roles
-- User registration and login
-- JWT-based authentication
-- Role-based access control
-- Default registration creates a **MEMBER**
-- **ADMIN** users are currently created by promoting an existing user in PostgreSQL
+This project was therefore selected to address these limitations by developing a self-hostable collaborative Kanban platform that integrates real-time task synchronization, role-based access control, persistent PostgreSQL storage, and containerized deployment. From a course perspective, the project is also meaningful because it combines application development, stateful storage, service orchestration, monitoring, and CI automation within one end-to-end cloud system.
 
-### Task Management
-- Create tasks (**ADMIN only**)
-- Assign and reassign tasks (**ADMIN only**)
-- Update task status
-- Delete tasks (**ADMIN only**)
-- Kanban board with:
-  - TODO
-  - IN_PROGRESS
-  - DONE
+## 3. Objectives
 
-### Collaboration
-- Real-time task sync using WebSocket
-- Task-specific discussion thread
-- Full discussion modal
-- Admin can:
-  - delete comments
-  - lock or unlock discussions
-- Comment count badge on each task card
+The objective of this project was to implement a cloud-native collaborative task management application in which authenticated users can create, assign, update, and discuss tasks while preserving application state and receiving near real-time updates across clients.
 
-### UI
-- Dark / Light theme
-- Role-aware dashboard
-- Task drawer with:
-  - Details tab
-  - Discussion tab
+Specifically, our team aimed to:
 
----
+- Provide secure authentication and role-based authorization for `ADMIN` and `MEMBER` users.
+- Support Kanban-style task tracking with assignment, status updates, and discussion threads.
+- Synchronize task and comment updates across connected clients using WebSocket events.
+- Store user, task, assignment, and comment data in PostgreSQL with volume-backed persistence.
+- Containerize frontend, backend, and database services for reproducible local development.
+- Use Docker Swarm for stack deployment, service restart policy, and frontend replication.
+- Expose monitoring metrics through Prometheus and visualize them in Grafana dashboards.
+- Add a GitHub Actions workflow so that pushes and pull requests automatically trigger backend/frontend CI checks.
+- Provide a database backup script for exporting PostgreSQL data.
 
-## Tech Stack
+## 4. Technical Stack
 
-### Frontend
-- React
-- Vite
-- Socket.IO client
+### Application Stack
 
-### Backend
-- Node.js
-- Express
-- Prisma ORM
-- JWT auth
-- Socket.IO
+- **Frontend:** React, Vite, Axios, Socket.IO Client
+- **Backend:** Node.js, Express, Socket.IO, JWT, bcryptjs
+- **Database:** PostgreSQL 16
+- **ORM / Migration:** Prisma Client and Prisma Migrate
 
-### Database
-- PostgreSQL
+### Infrastructure and DevOps Stack
 
-### Local Development / Infrastructure
-- Docker
-- Docker Compose
+- **Containerization:** Docker
+- **Local composition:** Docker Compose
+- **Orchestration:** Docker Swarm using `docker-stack.yml`
+- **Monitoring:** Prometheus, Grafana, `prom-client`
+- **CI:** GitHub Actions workflow in `.github/workflows/ci.yml`
+- **Backup:** shell script `backup.sh` using `pg_dump`
 
----
+### Architecture Summary
 
-## Project Structure
+The frontend is implemented as a Vite-based React application and communicates with the backend through REST APIs and Socket.IO. The backend provides authentication, task, user, and comment endpoints, emits real-time update events, and exposes `/metrics`, `/api/health`, and `/api/db-health`. PostgreSQL stores all persistent entities, while Docker volumes preserve database and monitoring data across container restarts. Prometheus scrapes backend metrics, and Grafana automatically provisions both its Prometheus datasource and dashboard configuration from files under `monitoring/grafana`.
 
-```text
-collab-cloud-platform/
-├─ README.md
-├─ .env.example
-├─ .gitignore
-├─ docker-compose.yml
-├─ frontend/
-│  ├─ Dockerfile
-│  ├─ package.json
-│  ├─ index.html
-│  └─ src/
-├─ backend/
-│  ├─ Dockerfile
-│  ├─ package.json
-│  ├─ prisma/
-│  │  ├─ schema.prisma
-│  │  └─ migrations/
-│  └─ src/
-└─ docs/
-````
+## 5. Features and Requirement Coverage
 
----
+### 5.1 Authentication and Role-Based Access Control
 
-## Prerequisites
+Users can register and log in through the frontend. The backend issues JWT tokens and applies authentication middleware to protect API requests. Two roles are supported:
 
-Make sure the following are installed on your machine:
+- `MEMBER`: can view assigned/related tasks, update task status when authorized, and participate in discussions.
+- `ADMIN`: can create tasks, reassign users, delete tasks/comments, and lock or unlock task discussions.
 
-* Docker
-* Docker Compose
-* Git
+This feature satisfies the advanced role-based access control requirement and ensures that task management operations are restricted according to user responsibility.
 
-Recommended environment:
+### 5.2 Kanban Task Management
 
-* WSL on Windows
-* macOS Terminal
-* Linux shell
+The application provides a Kanban workflow with three task states: `TODO`, `IN_PROGRESS`, and `DONE`. Admin users can create tasks, edit task metadata and assignees, and delete tasks. Members can update the status of tasks with which they are associated. Each task card displays a comment count badge and opens a task drawer containing task details and discussion tabs.
 
----
+This feature fulfills the core objective of collaborative task tracking and demonstrates stateful CRUD operations backed by PostgreSQL.
 
-## Local Setup
+### 5.3 Real-Time Collaboration
 
-### 1. Clone the repository
+The backend initializes a Socket.IO server and emits events including `task:created`, `task:updated`, `task:deleted`, `comment:created`, and `comment:deleted`. The frontend subscribes to these events so that task board and discussion updates are reflected without requiring manual page refresh.
+
+This implements the advanced real-time functionality requirement and improves collaboration usability for distributed teams.
+
+### 5.4 Persistent Storage
+
+PostgreSQL is mounted to a Docker volume (`pgdata`) in both Compose and Swarm configurations so that data survives container restarts. Prisma migrations define the schema for `User`, `Task`, `TaskAssignment`, and `Comment`.
+
+This satisfies the state management requirement and ensures durable project data storage.
+
+### 5.5 Containerization and Orchestration
+
+The frontend and backend each include a Dockerfile, and `docker-compose.yml` defines the local development stack for frontend, backend, and database services. For orchestration, `docker-stack.yml` deploys a Docker Swarm stack with an overlay network, service restart policies, and two frontend replicas to demonstrate basic replication and load balancing.
+
+This satisfies the containerization and orchestration requirements. One intentional design decision was to keep the backend replica count at 1 because Socket.IO multi-instance synchronization was not implemented with a shared adapter such as Redis. This avoids inconsistent broadcast behavior across multiple backend replicas.
+
+### 5.6 Monitoring
+
+The backend uses `prom-client` to collect default process metrics and custom HTTP request count/duration metrics, then exposes them at `/metrics`. Prometheus scrapes the backend and Grafana is configured with:
+
+- a provisioned Prometheus datasource
+- a provisioned dashboard provider
+- an auto-loaded dashboard JSON: `ECE1779MonitorDashboard.json`
+
+This satisfies the monitoring requirement and allows the team to observe backend request rate and process metrics.
+
+### 5.7 CI Pipeline
+
+The GitHub Actions workflow runs on pushes to `main`/`master` and on pull requests. It contains two jobs:
+
+- **backend job:** checkout, setup Node.js 20, `npm install`, `npm run prisma:generate`
+- **frontend job:** checkout, setup Node.js 20, reinstall frontend dependencies, `npm run build`
+
+This implements the CI portion of the proposed CI/CD advanced feature by automatically validating backend dependency setup and frontend production build correctness after code changes.
+
+### 5.8 Database Backup
+
+The `backup.sh` script loads environment variables from `.env`, runs `pg_dump` inside the `collab_db` container, copies the dump file to the repository root, and removes incomplete output if the dump command fails. This provides a manual backup mechanism for PostgreSQL data. A future extension would be scheduled backup and upload to external object storage.
+
+## 6. User Guide
+
+### 6.1 Start the Application (Local Deployment)
+
+The local development environment has been moved to the `local-deploy` branch.  
+Please switch to this branch before starting the services.
 
 ```bash
 git clone https://github.com/Z1linQ/cloud-platform.git
 cd cloud-platform
-```
 
-### 2. Create the root `.env`
+# Switch to local deployment branch
+git checkout local-deploy
 
-Copy the example file:
-
-```bash
 cp .env.example .env
-```
-
-Recommended `.env` values:
-
-```env
-POSTGRES_DB=collab_db
-POSTGRES_USER=collab_user
-POSTGRES_PASSWORD=collab_password
-
-BACKEND_PORT=3000
-FRONTEND_PORT=5173
-
-JWT_SECRET=change_this_super_secret_key
-```
-
-If you change the database username, password, or database name, make sure you also update the SQL command used later for admin promotion.
-
-### 3. Start the containers
-
-```bash
 docker compose up --build
-```
 
-After startup, the services should be available at:
+### 6.2 Register and Log In
 
-* Frontend: `http://localhost:5173`
-* Backend health: `http://localhost:3000/api/health`
-* Backend database health: `http://localhost:3000/api/db-health`
+1. Open `http://localhost:5173`.
+2. Create a new account from the authentication page.
+3. Log in with the registered email/password.
 
----
+By default, newly registered accounts are assigned the `MEMBER` role.
 
-## Database Setup
+### 6.3 Promote an ADMIN User
 
-### 4. Run Prisma migration
-
-After the containers are running, execute:
-
-```bash
-docker compose exec backend npx prisma migrate dev
-docker compose exec backend npx prisma generate
-```
-
-If migrations already exist, this will apply them to the local database.
-
----
-
-## Creating Users
-
-### 5. Register a normal MEMBER account
-
-Open the frontend in your browser:
-
-```text
-http://localhost:5173
-```
-
-Register a user normally through the UI.
-
-Example test users:
-
-* `admin@example.com`
-* `member@example.com`
-
-At this stage, **all users registered through the UI are created as MEMBER by default**.
-
----
-
-## Creating an ADMIN User
-
-### 6. Promote an existing user to ADMIN
-
-After registering a user, promote them manually in PostgreSQL.
-
-Example:
+To test admin-only functionality, first register a user through the UI, then promote that user in PostgreSQL:
 
 ```bash
 docker compose exec db psql -U collab_user -d collab_db -c "UPDATE \"User\" SET role='ADMIN' WHERE email='admin@example.com';"
 ```
 
-If your `.env` uses different database values, replace:
+After this update, log out and log in again so that the frontend receives the refreshed role information.
 
-* `collab_user`
-* `collab_db`
+### 6.4 Create, Assign, and Update Tasks
 
-After promotion, log out and log back in with that account to refresh the role in the frontend.
+- As `ADMIN`, use the create-task panel to enter a title, an optional description, and assignees.
+- Move/update task status through the task controls.
+- As `MEMBER`, update only tasks that are assigned to you or created by you, depending on backend authorization.
+- Open a task card to inspect details in the task drawer.
 
----
+### 6.5 Use Discussion Threads
 
-## Role Policy
+- Open a task drawer and switch to the discussion tab.
+- Post comments on unlocked discussions.
+- As `ADMIN`, delete comments or lock/unlock a discussion when needed.
+- Use the full-thread modal to inspect the complete discussion history.
 
-### MEMBER can:
+### 6.6 Switch Theme
 
-* View tasks related to them
-* Change the status of related tasks
-* Add comments
-* View comments
-* View locked discussions in read-only mode
+Use the theme toggle in the UI to switch between dark and light modes.
 
-### ADMIN can:
+### 6.7 Monitoring Dashboard
 
-* Create tasks
-* Assign and reassign tasks
-* Change any task status
-* Delete tasks
-* Lock and unlock discussions
-* Delete any comment
-* View all tasks and summary statistics
-
----
-
-## Useful Commands
-
-### Start containers
+To inspect monitoring in Swarm mode:
 
 ```bash
-docker compose up --build
+python3 deploy.py
 ```
 
-### Stop containers
+Then open:
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001`
+
+Grafana login defaults to `admin` / `admin` unless overridden through environment variables. The dashboard should be provisioned automatically from `monitoring/grafana/dashboards/ECE1779MonitorDashboard.json`.
+
+### 6.8 Backup Database
 
 ```bash
-docker compose down
+chmod +x backup.sh
+./backup.sh
+ls -lh backup_*.sql
+```
+## Fly.io deployment
+
+1. login and launch fly.io by cmd: flyctl auth login
+2. Create a PostgreSQL app
+3. Create Frontend and Backend app
+4. Attach the database to the Backend app and deploy JWT_SECRET
+5. cd to the .\frontend and .\backend and flyctl deploy
+6. Check the status or check the monitoring system using the build in grafama in fly.io websit.
+
+## Fly.io User Guidance
+1. Open the link: "https://collab-frontend-ece1779.fly.dev"
+2. Login in using admin@example.com and password is 123456 
+3. Regist new account as members
+4. Post a task using the admin acount and try the platform as you wish
+optional: promote your own account to admin by entering the postgreSQL in fly.io and update your account using
+UPDATE "User" SET role='ADMIN' WHERE email='you@email.com'
+## 7. Development Guide
+
+### 7.1 Environment Configuration
+
+Create a root `.env` file from the template and set:
+
+```env
+POSTGRES_DB=collab_db
+POSTGRES_USER=collab_user
+POSTGRES_PASSWORD=collab_pass
+BACKEND_PORT=3000
+FRONTEND_PORT=5173
+JWT_SECRET=supersecret123
 ```
 
-### Stop containers and remove volumes
+If database credentials are changed after the PostgreSQL volume has already been initialized, the previous database user password may still remain in the existing volume. In that case, either update the user password directly inside PostgreSQL or recreate the database volume.
+
+### 7.2 Database Migration
+
+After the containers are running, apply Prisma migrations and regenerate Prisma Client:
 
 ```bash
-docker compose down -v
+docker compose exec backend npx prisma migrate deploy
+docker compose exec backend npx prisma generate
 ```
 
-### Check running services
+To inspect whether application tables exist:
+
+```bash
+docker compose exec db psql -U collab_user -d collab_db -c '\dt'
+```
+
+### 7.3 Local Testing and Debugging
+
+Useful commands:
 
 ```bash
 docker compose ps
-```
-
-### View backend logs
-
-```bash
 docker compose logs backend
-```
-
-### View frontend logs
-
-```bash
 docker compose logs frontend
-```
-
-### View database logs
-
-```bash
 docker compose logs db
-```
-
-### Open a shell inside the backend container
-
-```bash
-docker compose exec backend sh
-```
-
-### Open PostgreSQL shell
-
-```bash
-docker compose exec db psql -U collab_user -d collab_db
-```
-
----
-
-## API Smoke Tests
-
-### Backend health
-
-```bash
 curl http://localhost:3000/api/health
-```
-
-Expected response:
-
-```json
-{"message":"Backend is running","status":"ok"}
-```
-
-### Database health
-
-```bash
 curl http://localhost:3000/api/db-health
 ```
 
-Expected response:
+These commands were used to verify that the backend, frontend, and PostgreSQL services were running correctly, and to diagnose a database authentication failure caused by a mismatch between `.env` and the state stored in an older PostgreSQL volume.
 
-```json
-{"message":"Database connection successful","status":"ok"}
-```
+### 7.4 Swarm Deployment
 
----
-
-## Development Notes
-
-### Hot Reload
-
-The project is configured for development using mounted Docker volumes.
-
-That means:
-
-* editing frontend files updates the UI automatically
-* editing backend files restarts the backend automatically
-
-In most cases, you do **not** need to rebuild the containers after normal source-code changes.
-
-### Rebuild is needed when:
-
-* `Dockerfile` changes
-* `package.json` changes
-* dependencies are added or removed
-* environment/build configuration changes
-
-Then run:
+The repository includes a helper script for Swarm deployment:
 
 ```bash
-docker compose down
-docker compose up --build
-```
-
----
-
-## Team Setup Notes
-
-For local development, each teammate should:
-
-1. Pull the latest code
-2. Copy `.env.example` to `.env`
-3. Run `docker compose up --build`
-4. Run Prisma migration
-5. Register their own account through the UI
-6. Promote one account to ADMIN if admin testing is needed
-7. Use two browser sessions for testing:
-
-   * one ADMIN
-   * one MEMBER
-
----
-
-## Docker Swarm Deployment
-
-This repository includes a Swarm stack file for orchestration demo and service management.
-
-### Files
-
-* `docker-stack.yml` for Swarm stack services
-* `deploy.py` for one-command deploy on Windows PowerShell
-
-### Quick Deploy (PowerShell)
-
-From project root:
-
-python deploy.py
-
-The script will:
-
-1. Initialize Swarm if not active
-2. Build backend and frontend images
-3. Deploy stack `collab`
-4. Print running Swarm services
-
-### Manual Deploy Commands
-
-```bash
-docker swarm init
-docker build -t collab_backend:swarm ./backend
-docker build -t collab_frontend:swarm ./frontend
-docker stack deploy -c docker-stack.yml collab
+python3 deploy.py
 docker stack services collab
-```
-
-### Scale Services (demo for orchestration)
-
-```bash
-docker service scale collab_frontend=2
-docker service scale collab_backend=2
-docker stack services collab
-```
-
-### Inspect Service Tasks
-
-```bash
 docker stack ps collab
 ```
 
-### Remove Stack
+`deploy.py` checks Docker daemon availability, initializes Swarm when needed, builds backend and frontend images, deploys `docker-stack.yml`, and lists stack services.
 
-```bash
-docker stack rm collab
-```
+### 7.5 CI Workflow Verification
 
-### Initial Demo Data Setup for Swarm (recommended before presentation)
+After pushing to GitHub, inspect the Actions tab to confirm both `backend` and `frontend` jobs pass. During development, the frontend job initially failed because Rollup's Linux optional package was missing in the GitHub runner environment. We updated the workflow to reinstall frontend dependencies cleanly before running `npm run build`.
 
-For consistent presentation demo experience, set up demo accounts and tasks after deploying the stack.
+## 8. Deployment Information
 
-After `docker stack deploy -c docker-stack.yml collab` is complete and all services are running:
+- **Live application URL:** https://collab-frontend-ece1779.fly.dev
+- **Local frontend URL:** `http://localhost:5173`
+- **Local backend health URL:** `http://localhost:3000/api/health`
+- **Grafana URL in Swarm mode:** `http://localhost:3001`
+- **Prometheus URL in Swarm mode:** `http://localhost:9090`
 
-1. Open browser and navigate to `http://localhost:5173`
+At the time of writing, the repository is fully runnable in a local environment with Docker Compose, and Swarm stack deployment is available through `deploy.py`. If a public cloud VM or domain is finalized before submission, the corresponding endpoint should be inserted into the live URL field above.
 
-2. Register an ADMIN account:
-   ```
-   Email: admin@example.com
-   Password: Password123!
-   ```
+## 9. AI Assistance and Verification Summary
 
-3. Register a MEMBER account in a different browser/incognito:
-   ```
-   Email: member@example.com
-   Password: Password123!
-   ```
+AI tools were used as implementation and documentation support, primarily for:
 
-4. Promote admin account to ADMIN role:
-   ```bash
-   docker exec -it $(docker ps -q -f name=collab_db) psql -U collab_user -d collab_db -c "UPDATE \"User\" SET role='ADMIN' WHERE email='admin@example.com';"
-   ```
+- organizing proposal/report structure in Markdown
+- suggesting CI workflow structure and DevOps troubleshooting steps
+- debugging Docker/PostgreSQL backup and Prisma authentication issues
+- drafting concise explanations for architectural decisions and implementation tradeoffs
+- debugging Docker compose and Docker Swarm deployment issues
+- providing suggestions on backend and frontend development
+- debugging the backend API and overall functionality
 
-5. Create demo tasks by logging in as admin and using the UI to create 2-3 sample tasks assigned to the member.
+The team did not treat AI-generated output as automatically correct. One representative limitation was that an initial backup-script suggestion implicitly assumed that the database name defined in `.env` matched the actual PostgreSQL database stored in the persistent volume. In practice, the existing volume had been initialized with a different database name, which caused `pg_dump` to fail and produced an empty SQL file. This issue was verified by querying PostgreSQL directly with `psql -l`, after which the environment/database mismatch was corrected and explicit shell error handling was added to `backup.sh`.
 
-**Note:** This ensures both `docker compose` and `docker stack` deployments have identical initial data for presentation, avoiding confusion about demo readiness.
+Correctness was verified through Docker container status inspection, backend/database health endpoints, Prisma migration commands, PostgreSQL table inspection, application logs, manual UI testing, and CI results from GitHub Actions.
 
-### Stateful Design Note
+Detailed AI interaction examples are intended to be documented separately in `ai-session.md`, as required by the course instructions.
 
-PostgreSQL data is stored in a named volume `pgdata`.
-This ensures application data survives container restarts and service redeployments.
+## 10. Individual Contributions
 
----
+### Qingyun Jia
 
-## Monitoring and Observability
+- Implemented Docker/Swarm and monitoring-related integration, theme support, README updates and maintained the main repository history.
+- Fixed deployment script behavior in `deploy.py` and contributed to Swarm/monitoring setup.
+- Participated in backend testing and database troubleshooting.
 
-Prometheus and Grafana are included in the Swarm stack for metrics collection and visualization.
+Evidence in the Git history includes commits authored by `Qingyun Jia`, including backend/deployment updates and changes merged from the `Qingyun` branch.
 
-### Monitoring Services
+### Jiaming Liu
 
-* Prometheus: `http://localhost:9090`
-* Grafana: `http://localhost:3001`
+- Contributed to frontend workflow validation, CI workflow creation, backup script implementation, Git branch/merge operations, and documentation/report drafting.
+- Diagnosed and fixed GitHub Actions frontend build failure caused by frontend dependency installation differences on Linux runners.
+- Helped validate local runtime health by checking container states, backend health endpoints, database migration status, and PostgreSQL tables.
 
-Default Grafana credentials (can be overridden in `.env`):
+Evidence in the Git history includes commits authored by `bjxx-liu`, such as `Add CI workflow, Grafana provisioning, and backup script` and `Fix frontend CI dependency install`.
 
-* username: `admin`
-* password: `admin`
+### Zilin Qiu
 
-### What is monitored
+- Implemented the frontend Kanban UI, task board interactions, WebSocket synchronization, comment thread features, theme support, and README updates.
+- Implemented backend and database-related functionality, including authentication, Prisma schema/migration work, task APIs, comment APIs, and authorization logic.
+- Coordinated repository structure and user-facing feature documentation.
 
-* Backend request counter: `http_requests_total`
-* Backend CPU Usage
-* Backend Memory Usage
+Evidence in the Git history includes commits authored by `Z1linQ`, such as `Skeleton done`, `version0.2 websocket sync added`, `version 0.4 Update comments functionality`, and README updates.
 
-### Quick verification commands
+## 11. Lessons Learned and Concluding Remarks
 
-```bash
-docker stack services collab
-curl http://localhost:3000/metrics
-curl http://localhost:9090/-/healthy
-```
+This project demonstrated that building a collaborative cloud application requires careful coordination across frontend state management, backend authorization, database persistence, and deployment configuration. A key lesson was that containerized services can still fail because of environment drift, especially when persistent volumes retain earlier database credentials or schema assumptions. Another important lesson was that real-time communication becomes more complex under horizontal backend scaling; without a shared Socket.IO adapter, increasing backend replicas may lead to inconsistent event delivery.
 
-### Demo flow for presentation
+We also learned that CI failures may appear only in Linux-based GitHub runners even when local macOS development succeeds, especially when dependency resolution includes optional native packages. Monitoring integration was useful not only as a course requirement but also as a practical way to inspect backend request behavior.
 
-1. Open Grafana using http://localhost:3001
-2. Import ECE1779MonitorDashboard.json
-3. Go to the dashboard and check the visualized monitoring
-
----
-
-## Current Deployment Scope
-
-This README documents both:
-
-* local development via Docker Compose
-* local orchestration demo via Docker Swarm
-
-Server deployment steps, production environment variables, and cloud configuration will be documented later after the deployment environment is finalized.
+Overall, the project delivered a functional self-hosted collaborative task management platform with authentication, RBAC, real-time synchronization, persistent PostgreSQL storage, Docker-based deployment, Swarm orchestration support, Prometheus/Grafana monitoring, CI validation, and manual database backup. Future improvements include public cloud production deployment, scheduled offsite backups, UI-based admin management, backend multi-replica Socket.IO support through Redis, and a more comprehensive automated test suite.
