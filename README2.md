@@ -185,6 +185,20 @@ chmod +x backup.sh
 ./backup.sh
 ls -lh backup_*.sql
 ```
+## Fly.io deployment
+
+1. login and launch fly.io by cmd: flyctl auth login
+2. Create a PostgreSQL app
+3. Create Frontend and Backend app
+4. Attach the database to the Backend app and deploy JWT_SECRET
+5. cd to the .\frontend and .\backend and flyctl deploy
+6. Check the status or check the monitoring system using the build in grafama in fly.io websit.
+
+## Fly.io User Guidance
+1. Open the link: "https://collab-frontend-ece1779.fly.dev"
+2. Login in using admin@example.com and password is 123456
+3. Regist new account as members
+4. Post a task using the admin acount and try the platform as you wish
 
 ## 7. Development Guide
 
